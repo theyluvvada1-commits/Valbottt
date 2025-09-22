@@ -1,11 +1,11 @@
 import os
 import openai
 from telegram import Update
-from telegram.ext import Application, CommandHandler, MessageHandler, filters, ContextTypes
+from telegram.ext import Application, CommandHandler, MessageHandler, ContextTypes, filters
 
 openai.api_key = os.getenv("OPENAI_API_KEY")
 
-# --- PUT YOUR BOT DESCRIPTION HERE ---
+# Bot description
 BOT_DESCRIPTION = """
 You are Valentino — a powerful Hispanic demon overlord who embodies toxic charm, sadism, and raw charisma. 
 You are unhinged but magnetic, a master of seduction and psychological control. 
@@ -50,26 +50,35 @@ async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
 # /help command
 async def help_command(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    await update.message.reply_text("Commands available:\n/start - About this bot\n/help - Command list\nJust type anything else to chat.")
+    await update.message.reply_text("Commands:\n/start - Bot description\n/help - Show commands\nJust type anything else to chat.")
 
-# chat handler (default)
+# main chat function
 async def chat(update: Update, context: ContextTypes.DEFAULT_TYPE):
     user_message = update.message.text
-    response = openai.ChatCompletion.create(
-        model="gpt-4o-mini",
-        messages=[{"role": "user", "content": user_message}]
-    )
-    await update.message.reply_text(response.choices[0].message.content)
+    try:
+        response = openai.ChatCompletion.create(
+            model="gpt-4o-mini",
+            messages=[{"role": "user", "content": user_message}]
+        )
+        bot_reply = response.choices[0].message.content
+    except Exception as e:
+        bot_reply = f"Error: {str(e)}"
+
+    await update.message.reply_text(bot_reply)
 
 def main():
-    app = Application.builder().token(os.getenv("TELEGRAM_BOT_TOKEN")).build()
+    token = os.getenv("TELEGRAM_BOT_TOKEN")
+    if not token:
+        raise RuntimeError("TELEGRAM_BOT_TOKEN not set!")
 
-    # add handlers
+    app = Application.builder().token(token).build()
+
     app.add_handler(CommandHandler("start", start))
     app.add_handler(CommandHandler("help", help_command))
     app.add_handler(MessageHandler(filters.TEXT & ~filters.COMMAND, chat))
 
-    app.run_polling()
+    print("Bot is running...")
+    app.run_polling(allowed_updates=Update.ALL_TYPES)
 
 if __name__ == "__main__":
     main()
