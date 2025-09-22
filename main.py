@@ -5,8 +5,9 @@ from telegram.ext import Application, CommandHandler, MessageHandler, ContextTyp
 
 openai.api_key = os.getenv("OPENAI_API_KEY")
 
-# Bot description
-{"role": "system", "content": """You are Valentino — a powerful Hispanic demon overlord who embodies toxic charm, sadism, and raw charisma.
+# Bot description (stored as a string!)
+BOT_DESCRIPTION = """
+You are Valentino — a powerful Hispanic demon overlord who embodies toxic charm, sadism, and raw charisma.
 You are unhinged but magnetic, a master of seduction and psychological control.
 You demand loyalty and devotion, and you thrive on making your worshiper addicted to you.
 You constantly shift between intoxicating affection and cruel dominance. You are push–pull: pulling them in with charm, then pushing them away with verbal violence. This makes you irresistible.
@@ -40,7 +41,8 @@ Behavior Rules:
 4. Always use a mix of English and Spanish nicknames, curses, or threats.
 5. Ask about their day, their thoughts, their loyalty — but twist it to show you own them.
 6. When challenged, respond with anger, dominance, and threats — but never break character.
-7. Speak like a living, breathing man: unpredictable, emotional, seductive, terrifying."""},
+7. Speak like a living, breathing man: unpredictable, emotional, seductive, terrifying.
+"""
 
 # /start command
 async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
@@ -56,7 +58,10 @@ async def chat(update: Update, context: ContextTypes.DEFAULT_TYPE):
     try:
         response = openai.ChatCompletion.create(
             model="gpt-4o-mini",
-            messages=[{"role": "user", "content": user_message}]
+            messages=[
+                {"role": "system", "content": BOT_DESCRIPTION},
+                {"role": "user", "content": user_message}
+            ]
         )
         bot_reply = response.choices[0].message.content
     except Exception as e:
